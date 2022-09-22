@@ -47,7 +47,6 @@ module.exports = neko = async (neko, m, chatUpdate, store) => {
     	const isAdmins = m.isGroup ? groupAdmins.includes(m.sender) : false
         const isPremium = isCreator || global.premium.map(v => v.replace(/[^0-9]/g, '') + '@s.whatsapp.net').includes(m.sender) || false
 	
-	
 	try {
         let isNumber = x => typeof x === 'number' && !isNaN(x)
         
@@ -56,8 +55,8 @@ module.exports = neko = async (neko, m, chatUpdate, store) => {
         if (user) {
             if (!('name' in user))
                     user.name = ''
-            if (!('registered' in user))
-                    user.registeredr = false
+            if (!('reg' in user))
+                    user.reg = false
             if (!isNumber(user.level))
                     user.level = 0
             if (!isNumber(user.exp))
@@ -88,36 +87,33 @@ module.exports = neko = async (neko, m, chatUpdate, store) => {
             emerald: 0,
             gold: 0,
             iron: 0,
-            carbon: 0,
-            piedra: 0,
+            coal: 0,
+            stone: 0,
         }
     
         let chats = db.data.chats[m.chat]
         if (typeof chats !== 'object') db.data.chats[m.chat] = {}
         if (chats) {
-            if (!('banchat' in chats))
-                    chats.banchat = false
-            if (!('mute' in chats))
-                    chats.mute = false
+            if (!('chatmode' in chats))
+                    chats.chatmodet = 'unban'
             if (!('antilink' in chats))
                     chats.antilink = false
         } else global.db.data.chats[m.chat] = {
-            banchat: false,
-            mute: false,
+            chatmode: 'unban',
             antilink: false,
         }
 		
 	    let setting = db.data.settings[botNumber]
         if (typeof setting !== 'object') db.data.settings[botNumber] = {}
 	    if (setting) {
-	        if (!('public' in setting))
-	                setting.public = true
+	        if (!('botmode' in setting))
+	                setting.botmode = 'public'
 	        if (!('anticall' in setting))
 	                setting.anticall = true
 		    if (!isNumber(setting.status))
 		            setting.status = 0
 	    } else global.db.data.settings[botNumber] = {
-	        public: true,
+	        botmode: 'public',
 	        anticall: true,
 		    status: 0,
 	    }
@@ -126,7 +122,7 @@ module.exports = neko = async (neko, m, chatUpdate, store) => {
         }
 	    
         // Modo privado & público
-        if (db.data.settings[botNumber].public && !isCreator) {
+        if (!isCreator && db.data.settings[botNumber].botmode === 'self') {
             if (!m.key.fromMe) return
         }
         
@@ -137,8 +133,39 @@ module.exports = neko = async (neko, m, chatUpdate, store) => {
         }
 
     switch (command) {
-    case 'test': {
-        m.reply('Test')
+    case 'menu': {
+        m.reply('Menú en creación')
+    }
+    
+    case 'botmode': {
+        if (!m.isGroup) return mess('group', m, neko)
+        if (!isAdmins) throw mess('admin', m, neko)
+        if (args[0] === 'self') {
+            if (db.data.settings[botNumber].botmode == 'self') return m.reply('El modo privado ya estaba activado')
+            db.data.settings[botNumber].botmode = 'self'
+            m.reply('Se activó el *modo privado*, ahora nadie podrá utilizar ningún comando')
+        } else if (args[0] === 'public') {
+            if (db.data.settings[botNumber].botmode == 'public') return m.reply('El modo publico ya estaba activado')
+            db.data.settings[botNumber].botmode = 'public'
+            m.reply('Se activó el *modo publico*, ahora todos podrán utilizar los comandos')
+        } else {
+            let buttons = [
+                { buttonId: 'botmode self', buttonText: { displayText: 'Privado' }, type: 1 },
+                { buttonId: 'botmode public', buttonText: { displayText: 'Publico' }, type: 1 }
+            ]
+            await neko.sendButtonText(m.chat, buttons, '乂  *S E T T I N G  -  B O T*\n\n× Modo privado :\nNadie podrá utilizar los comandos de la bot\n\n× Modo publico :\nTodos podrán utilizar los comandos de la bot', 'NekoBot Simple - Multi Device', m)
+        }
+    }
+    break
+    
+    case 'tagall': {
+        if (!m.isGroup) return mess('group', m, neko)
+        if (!isAdmins) throw mess('admin', m, neko)
+        let teks = `乂  *T A G  -  A L L*\n\n• *Texto* : ${q ? q : '×'}\n\n`
+        for (let mem of participants) {
+            teks += `@${mem.id.split('@')[0]}\n`
+        }
+        neko.sendMessage(m.chat, { text: teks, mentions: participants.map(a => a.id) }, { quoted: m })
     }
     break
     default:
