@@ -18,9 +18,8 @@ global.premium = []
 global.packname = 'ネコ - NK'
 global.author = 'Sticker.ly * Random'
 
-global.sessionName = 'hisoka'
 global.prefa = ['', '!', '+', '#', '.']
-
+global.nkfooter = 'NekoBot Simple - Multi Device'
 
 global.mess = (type, m, neko) => {
     let msg = {
