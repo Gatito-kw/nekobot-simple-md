@@ -131,6 +131,18 @@ module.exports = neko = async (neko, m, chatUpdate, store) => {
             neko.readMessages([m.key])
             console.log('\n', chalk.black(chalk.redBright('[ INFO ]')), chalk.black(chalk.bgGreen((new Date).toTimeString())), chalk.black(chalk.bgYellow(m.mtype)), '\n', chalk.black(chalk.white(budy)), '\n• | ', chalk.magenta('De'), chalk.green(pushname), '-', chalk.yellow(m.sender), '\n• | ', chalk.magenta('En'), chalk.green(m.isGroup ? groupName : 'chat privado'), '-', chalk.yellow(m.chat))
         }
+        
+        if (db.data.chats[m.chat].antilink) {
+            if (budy.match('chat.whatsapp.com')) {
+                if (!isBotAdmins) return !1
+                let gclink = ('https://chat.whatsapp.com/' + await neko.groupInviteCode(m.chat))
+                let isGroupLink = new RegExp(gclink, 'i')
+                let isgclink = isGroupLink.test(m.text)
+                if (isgclink && isAdmins && isCreator) return !0
+                m.reply(`Enlace detectado de *@${m.sender.split('@')[0]}*, en este grupo está prohibido enviar enlaces de otros grupos`, false, { mentions: [m.sender] })
+                neko.groupParticipantsUpdate(m.chat, [m.sender], 'remove')
+            }
+        }
 
     switch (command) {
     case 'menu': {
@@ -139,7 +151,7 @@ module.exports = neko = async (neko, m, chatUpdate, store) => {
     
     case 'botmode': {
         if (!m.isGroup) return mess('group', m, neko)
-        if (!isAdmins) throw mess('admin', m, neko)
+        if (!isAdmins) return mess('admin', m, neko)
         if (args[0] === 'self') {
             if (db.data.settings[botNumber].botmode == 'self') return m.reply('El modo privado ya estaba activado')
             db.data.settings[botNumber].botmode = 'self'
@@ -153,7 +165,45 @@ module.exports = neko = async (neko, m, chatUpdate, store) => {
                 { buttonId: 'botmode self', buttonText: { displayText: 'Privado' }, type: 1 },
                 { buttonId: 'botmode public', buttonText: { displayText: 'Publico' }, type: 1 }
             ]
-            await neko.sendButtonText(m.chat, buttons, '乂  *S E T T I N G  -  B O T*\n\n× Modo privado :\nNadie podrá utilizar los comandos de la bot\n\n× Modo publico :\nTodos podrán utilizar los comandos de la bot', 'NekoBot Simple - Multi Device', m)
+            await neko.sendButtonText(m.chat, buttons, '乂  *S E T T I N G  -  B O T*\n\n× Modo privado :\nNadie podrá utilizar los comandos de la bot\n\n× Modo publico :\nTodos podrán utilizar los comandos de la bot', nkfooter, m)
+        }
+    }
+    break
+    
+    case 'antilink': {
+        if (!m.isGroup) return mess('group', m, neko)
+        if (!isBotAdmins) return mess('botadmin', m, neko)
+        if (!isAdmins) return mess('admin', m, neko)
+        if (args[0] === "on") {
+            if (db.data.chats[m.chat].antilink) return m.reply('El antilink ya está activado en este grupo')
+            db.data.chats[m.chat].antilink = true
+            m.reply('Se activó el antilink en este grupo')
+        } else if (args[0] === "off") {
+            if (!db.data.chats[m.chat].antilink) return m.reply('El antilink ya está desactivado en este grupo')
+            db.data.chats[m.chat].antilink = false
+            m.reply('Se desactivó el antilink en este grupo')
+        } else {
+            let buttons = [
+                { buttonId: 'antilink on', buttonText: { displayText: 'Antivar' }, type: 1 },
+                { buttonId: 'antilink off', buttonText: { displayText: 'Desactivar' }, type: 1 }
+            ]
+            await neko.sendButtonText(m.chat, buttons, '乂  *A N T I  -  L I N K*\n\nElimina a todas las personas que envían enlaces de un grupo de WhatsApp', nkfooter, m)
+        }
+    }
+    break
+    
+    case 'sticker': case 'stickergif': case 's': {
+    if (/image/.test(mime)) {
+        let media = await neko.downloadMediaMessage(qmsg)
+        let encmedia = await neko.sendImageAsSticker(m.chat, media, m, { packname: global.packname, author: global.author })
+        await fs.unlinkSync(encmedia)
+        } else if (/video/.test(mime)) {
+            if (qmsg.seconds > 11) return m.reply('Etiqueta un video que tenga mínimo 10 segundos!')
+            let media = await neko.downloadMediaMessage(qmsg)
+            let encmedia = await neko.sendVideoAsSticker(m.chat, media, m, { packname: packname || '', author: author || '' })
+            await fs.unlinkSync(encmedia)
+        } else {
+            m.reply(`Etiqueta o envia un video|imagen|gif con el comando *${prefix + command}* para convertirlo a sticker`)
         }
     }
     break
