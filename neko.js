@@ -137,19 +137,8 @@ module.exports = neko = async (neko, m, chatUpdate, store) => {
         }
 
     switch (command) {
-    case 'minar': case 'mine': {
-        let user = db.data.users[m.sender]
-        let type = (text || '').toLowerCase()
-	    switch (type) {
-	    case 'estaño': case 'tin': {
-	        //let tin_ore = (user.)
-	        let tin = Math.ceil(Math.random() * 3)
-	        m.reply(`⛏️ | Has minado ${tin} de *Estaño*`)
-	        
-	        
-	    }
-	    break
-        }
+    case 'test': {
+        m.reply('Test')
     }
     break
     default:
